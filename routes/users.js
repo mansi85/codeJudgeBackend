@@ -26,37 +26,39 @@ router.post("/api/process-interval", (req, res, next) => {
     `ffprobe -v error -i ${inputFilePath} -show_entries format=duration -of default=noprint_wrappers=1`
   );
 
-  videoLengthCommand.stdout.on("data", (data) => {
+  videoSizeCommand.stdout.on("data", (data) => {
 
     //Getting video duration(length if the video)
     videoSize = data.split("=")[1];
 
     const intervalDuration = req.body.interval_duration;
-    while (duration < videoSize) {
+    //commenting (not working properly)
+    // while (duration < videoSize) {
 
       //Video segmentation
       exec(
-        `ffmpeg -ss ${duration} -i ${inputFilePath} -t ${intervalDuration} -c:v h264 output-${duration}.mp4`,
+        `ffmpeg -ss ${duration} -i ${inputFilePath} -t ${intervalDuration} -c copy output-${duration}.mp4`,
         (error, stdout, stderr) => {
           duration = duration + intervalDuration;
           if (error) {
             console.log(`error: ${error.message}`);
             return;
           } else {
-            res.download(outputFilePath, (err) => {
-              if (err) throw err;
+            console.log("in else");
+            // res.download(outputFilePath, (err) => {
+            //   if (err) throw err;
 
-              req.files.forEach((file) => {
-                fs.unlinkSync(file.path);
-              });
+            //   req.files.forEach((file) => {
+            //     fs.unlinkSync(file.path);
+            //   });
 
-              fs.unlinkSync(listFilePath);
-              fs.unlinkSync(outputFilePath);
-            });
+            //   fs.unlinkSync(listFilePath);
+            //   fs.unlinkSync(outputFilePath);
+            // });
           }
         }
       );
-    }
+    // }
   });
 });
 
@@ -64,17 +66,19 @@ router.post("/api/process-interval", (req, res, next) => {
 /** Input parameters to run this
  * {
     "segments" : [{
-        "video_url": "big_buck_bunny_720p_2mb.mp4"
+        "video_url": "big_buck_bunny_720p_2mb.mp4",
         "start" : 5,
         "end": 10
     }, {
-        "video_url": "big_buck_bunny_720p_2mb.mp4"
+        "video_url": "big_buck_bunny_720p_2mb.mp4",
         "start" : 5,
         "end": 10
     }],
     "width" : 480,
     "height" : 640
 }
+
+Combining the segments and sending back video
  */
 router.post("/api/combine-video", (req, res, next) => {
   if (req.body.segments) {
